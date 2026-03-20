@@ -1,0 +1,64 @@
+apiVersion: policies.kubewarden.io/v1
+kind: ClusterAdmissionPolicy
+metadata:
+  annotations:
+    io.kubewarden.policy.category: Secure supply chain
+    io.kubewarden.policy.severity: medium
+  name: trusted-repos
+spec:
+  module: registry://ghcr.io/kubewarden/policies/trusted-repos:v2.0.6
+  settings:
+    registries:
+      allow:
+        - registry.suse.com
+        - dp.apps.rancher.io
+        - ghcr.io/kubewarden
+        - ghcr.io/rancher
+      reject:
+        - null
+    tags:
+      reject:
+        - latest
+        - bogus
+  rules:
+  - apiGroups:
+    - ''
+    apiVersions:
+    - v1
+    resources:
+    - pods
+    operations:
+    - CREATE
+    - UPDATE
+  - apiGroups:
+    - ''
+    apiVersions:
+    - v1
+    resources:
+    - replicationcontrollers
+    operations:
+    - CREATE
+    - UPDATE
+  - apiGroups:
+    - apps
+    apiVersions:
+    - v1
+    resources:
+    - deployments
+    - replicasets
+    - statefulsets
+    - daemonsets
+    operations:
+    - CREATE
+    - UPDATE
+  - apiGroups:
+    - batch
+    apiVersions:
+    - v1
+    resources:
+    - jobs
+    - cronjobs
+    operations:
+    - CREATE
+    - UPDATE
+  mutating: false
