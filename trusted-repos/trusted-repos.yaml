@@ -14,8 +14,6 @@ spec:
         - dp.apps.rancher.io
         - ghcr.io/kubewarden
         - ghcr.io/rancher
-      reject:
-        - null
     tags:
       reject:
         - latest
