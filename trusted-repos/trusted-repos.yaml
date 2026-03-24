@@ -18,7 +18,6 @@ spec:
         - docker.io/rancher
     tags:
       reject:
-        - latest
         - bogus
   rules:
   - apiGroups:
