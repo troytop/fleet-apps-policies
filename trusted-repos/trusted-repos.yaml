@@ -11,6 +11,7 @@ spec:
     registries:
       allow:
         - registry.suse.com
+        - registry.rancher.com
         - dp.apps.rancher.io
         - ghcr.io/kubewarden
         - ghcr.io/rancher
