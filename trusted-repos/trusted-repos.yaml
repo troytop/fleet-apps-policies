@@ -15,7 +15,9 @@ spec:
         - dp.apps.rancher.io
         - ghcr.io/kubewarden
         - ghcr.io/rancher
-        - docker.io
+        - docker.io/rancher
+        - docker.io/alpine
+        - docker.io/library
     tags:
       reject:
         - bogus
