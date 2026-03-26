@@ -17,7 +17,7 @@ spec:
         - ghcr.io/rancher
         - docker.io/rancher
         - docker.io/alpine
-        - docker.io/library
+#        - docker.io/library
     tags:
       reject:
         - bogus
