@@ -16,7 +16,7 @@ spec:
         - ghcr.io/kubewarden
         - ghcr.io/rancher
         - docker.io/rancher
-        - docker.io/alpine
+#        - docker.io/alpine
 #        - docker.io/library
     tags:
       reject:
