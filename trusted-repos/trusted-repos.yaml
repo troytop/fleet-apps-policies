@@ -7,6 +7,7 @@ metadata:
   name: trusted-repos
 spec:
   module: registry://ghcr.io/kubewarden/policies/trusted-repos:v2.0.6
+  mode: monitor
   settings:
     registries:
       allow:
