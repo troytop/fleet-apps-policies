@@ -17,6 +17,7 @@ spec:
         - ghcr.io/kubewarden
         - ghcr.io/rancher
         - docker.io/rancher
+        - rancher/mirrored-pause  # <- PodSandbox (pause container)
 #        - docker.io/alpine
         - docker.io/tiltdev # <- for the restart-helper extension, a simple go wrapper needed for instant update with interpreted languages
         - docker.io/library # <- local images built by Tilt (canonical name, nothing is published, it lives in local Rancher Desktop image store
