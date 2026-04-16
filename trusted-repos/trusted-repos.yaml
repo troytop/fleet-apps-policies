@@ -62,8 +62,8 @@ spec:
       # --- ALLOW RULE: Strict prefix matching + Short names ---
       - expression: >
           variables.allImages.all(image, 
-            image.startsWith('cve-exporter') ||            // <- On autorise JUSTE cette image courte
-            image.startsWith('message-wall') ||            // <- On autorise JUSTE cette image courte
+            image.startsWith('cve-exporter') ||            // <- our applications
+            image.startsWith('message-wall') ||            // <- our applications
             image.startsWith('registry.suse.com/') || 
             image.startsWith('registry.rancher.com/') || 
             image.startsWith('dp.apps.rancher.io/') || 
