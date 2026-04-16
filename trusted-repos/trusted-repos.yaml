@@ -1,68 +1,76 @@
 apiVersion: policies.kubewarden.io/v1
 kind: ClusterAdmissionPolicy
 metadata:
+  name: trusted-repos
   annotations:
     io.kubewarden.policy.category: Secure supply chain
     io.kubewarden.policy.severity: medium
-  name: trusted-repos
 spec:
-  module: registry://ghcr.io/kubewarden/policies/trusted-repos:v2.0.6
-#  mode: monitor
-  settings:
-    registries:
-      allow:
-        - registry.suse.com
-        - registry.rancher.com
-        - dp.apps.rancher.io
-        - ghcr.io/kubewarden
-        - ghcr.io/rancher
-        - docker.io/rancher
-        - rancher/mirrored-pause  # <- PodSandbox (pause container)
-#        - docker.io/alpine
-        - docker.io/tiltdev # <- for the restart-helper extension, a simple go wrapper needed for instant update with interpreted languages
-        - docker.io/library # <- local images built by Tilt (canonical name, nothing is published, it lives in local Rancher Desktop image store
-    tags:
-      reject:
-        - bogus
-  rules:
-  - apiGroups:
-    - ''
-    apiVersions:
-    - v1
-    resources:
-    - pods
-    operations:
-    - CREATE
-    - UPDATE
-  - apiGroups:
-    - ''
-    apiVersions:
-    - v1
-    resources:
-    - replicationcontrollers
-    operations:
-    - CREATE
-    - UPDATE
-  - apiGroups:
-    - apps
-    apiVersions:
-    - v1
-    resources:
-    - deployments
-    - replicasets
-    - statefulsets
-    - daemonsets
-    operations:
-    - CREATE
-    - UPDATE
-  - apiGroups:
-    - batch
-    apiVersions:
-    - v1
-    resources:
-    - jobs
-    - cronjobs
-    operations:
-    - CREATE
-    - UPDATE
+  # Using CEL policy module to allow strict path-based filtering
+  module: registry://ghcr.io/kubewarden/policies/cel-policy:v1.0.0
+# mode: monitor
   mutating: false
+  rules:
+    - apiGroups: [""]
+      apiVersions: ["v1"]
+      resources: ["pods"]
+      operations: ["CREATE", "UPDATE"]
+    - apiGroups: [""]
+      apiVersions: ["v1"]
+      resources: ["replicationcontrollers"]
+      operations: ["CREATE", "UPDATE"]
+    - apiGroups: ["apps"]
+      apiVersions: ["v1"]
+      resources: ["deployments", "replicasets", "statefulsets", "daemonsets"]
+      operations: ["CREATE", "UPDATE"]
+    - apiGroups: ["batch"]
+      apiVersions: ["v1"]
+      resources: ["jobs", "cronjobs"]
+      operations: ["CREATE", "UPDATE"]
+      
+  settings:
+    variables:
+      # 1. Safely identify the resource type to locate the PodSpec
+      - name: isPod
+        expression: "has(object.spec.containers)"
+      - name: isWorkload
+        expression: "has(object.spec.template) && has(object.spec.template.spec.containers)"
+      - name: isCronJob
+        expression: "has(object.spec.jobTemplate) && has(object.spec.jobTemplate.spec.template.spec.containers)"
+      
+      # 2. Extract the actual PodSpec based on the resource type
+      - name: podSpec
+        expression: >
+          variables.isPod ? object.spec :
+          (variables.isWorkload ? object.spec.template.spec :
+          (variables.isCronJob ? object.spec.jobTemplate.spec.template.spec : null))
+          
+      # 3. Extract containers and initContainers
+      - name: containers
+        expression: "variables.podSpec != null && has(variables.podSpec.containers) ? variables.podSpec.containers : []"
+      - name: initContainers
+        expression: "variables.podSpec != null && has(variables.podSpec.initContainers) ? variables.podSpec.initContainers : []"
+      
+      # 4. Flatten all images into a single list
+      - name: allImages
+        expression: "(variables.containers + variables.initContainers).map(c, c.image)"
+        
+    validations:
+      # --- REJECT RULE: Prevent the 'bogus' tag ---
+      - expression: "!variables.allImages.exists(image, image.endsWith(':bogus'))"
+        message: "Deployment denied: The 'bogus' tag is strictly forbidden."
+
+      # --- ALLOW RULE: Strict prefix matching ---
+      - expression: >
+          variables.allImages.all(image, 
+            image.startsWith('registry.suse.com/') || 
+            image.startsWith('registry.rancher.com/') || 
+            image.startsWith('dp.apps.rancher.io/') || 
+            image.startsWith('ghcr.io/kubewarden/') || 
+            image.startsWith('ghcr.io/rancher/') || 
+            image.startsWith('docker.io/rancher/') || 
+            image.startsWith('rancher/mirrored-pause') ||  // <- PodSandbox (pause container)
+            image.startsWith('docker.io/tiltdev/') ||      // <- For the restart-helper extension
+            image.startsWith('docker.io/library/')         // <- Local images built by Tilt
+          )
+        message: "Deployment denied: The requested image path does not match the strict allowed prefixes."
