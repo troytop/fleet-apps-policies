@@ -54,15 +54,16 @@ spec:
       # 4. Flatten all images into a single list
       - name: allImages
         expression: "(variables.containers + variables.initContainers).map(c, c.image)"
-        
     validations:
       # --- REJECT RULE: Prevent the 'bogus' tag ---
       - expression: "!variables.allImages.exists(image, image.endsWith(':bogus'))"
         message: "Deployment denied: The 'bogus' tag is strictly forbidden."
 
-      # --- ALLOW RULE: Strict prefix matching ---
+      # --- ALLOW RULE: Strict prefix matching + Short names ---
       - expression: >
           variables.allImages.all(image, 
+            !image.contains('/') ||                        // <- short names (cve-exporter, postgres, etc.) are accepted even if not explicitely docker.io/library/
+            image.startsWith('docker.io/library/') ||      // <- Explicit docker.io/library/
             image.startsWith('registry.suse.com/') || 
             image.startsWith('registry.rancher.com/') || 
             image.startsWith('dp.apps.rancher.io/') || 
@@ -70,7 +71,6 @@ spec:
             image.startsWith('ghcr.io/rancher/') || 
             image.startsWith('docker.io/rancher/') || 
             image.startsWith('rancher/mirrored-pause') ||  // <- PodSandbox (pause container)
-            image.startsWith('docker.io/tiltdev/') ||      // <- For the restart-helper extension
-            image.startsWith('docker.io/library/')         // <- Local images built by Tilt
+            image.startsWith('docker.io/tiltdev/')         // <- For the restart-helper extension
           )
         message: "Deployment denied: The requested image path does not match the strict allowed prefixes."
