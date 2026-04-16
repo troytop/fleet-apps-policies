@@ -7,7 +7,7 @@ metadata:
     io.kubewarden.policy.severity: medium
 spec:
   # Using CEL policy module to allow strict path-based filtering
-  module: registry://ghcr.io/kubewarden/policies/cel-policy:v1.0.0
+  module: registry://ghcr.io/kubewarden/policies/cel-policy:v1.5.2
 # mode: monitor
   mutating: false
   rules:
