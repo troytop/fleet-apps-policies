@@ -62,15 +62,15 @@ spec:
       # --- ALLOW RULE: Strict prefix matching + Short names ---
       - expression: >
           variables.allImages.all(image, 
-            !image.contains('/') ||                        // <- short names (cve-exporter, postgres, etc.) are accepted even if not explicitely docker.io/library/
-            image.startsWith('docker.io/library/') ||      // <- Explicit docker.io/library/
+            image.startsWith('cve-exporter') ||            // <- On autorise JUSTE cette image courte
+            image.startsWith('message-wall') ||            // <- On autorise JUSTE cette image courte
             image.startsWith('registry.suse.com/') || 
             image.startsWith('registry.rancher.com/') || 
             image.startsWith('dp.apps.rancher.io/') || 
             image.startsWith('ghcr.io/kubewarden/') || 
             image.startsWith('ghcr.io/rancher/') || 
             image.startsWith('docker.io/rancher/') || 
-            image.startsWith('rancher/mirrored-pause') ||  // <- PodSandbox (pause container)
-            image.startsWith('docker.io/tiltdev/')         // <- For the restart-helper extension
+            image.startsWith('rancher/mirrored-pause') || 
+            image.startsWith('docker.io/tiltdev/')
           )
         message: "Deployment denied: The requested image path does not match the strict allowed prefixes."
